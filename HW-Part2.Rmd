@@ -5,7 +5,7 @@ output:
     reference_docx: word-styles-reference-01.docx
 ---
 
-This document contains all homework assignments for Group 2 from week 8-15.
+This document contains all homework assignments for Group 2 from week 8-15. Participants of this group include Vinicio Haro, Juliann McEachern, Jeremy O'Brien, Bethany Poulin, and Sang (Andy) Yoon. 
 
 **Note:** *Not all HW assignments are currently available in BBlearn for the second half of the semester*. 
 
@@ -44,7 +44,7 @@ data(chemicalManufacturing)
 
 The matrix processPredictors contains the 57 predictors (12 describing the input biological material and 45 describing the process predictors) for the 176 manufacturing runs. yield contains the percent yield for each run. 
 
-### (b) A small percentage of cells in the predictor set contain missing values. Use an imputation function to ﬁll in these missing values (e.g., see Sect. 3.8). 
+### (b) A small percentage of cells in the predictor set contain missing values. Use an imputation function to fill in these missing values (e.g., see Sect. 3.8). 
 ```{r kj-6.3b}
 #code
 ```
@@ -126,7 +126,7 @@ Model 3:
 #code
 ```
 
-### (b).  Which models appear to give the best performance? Does MARS select the informative predictors (those named X1–X5)?
+### (b).  Which models appear to give the best performance? Does MARS select the informative predictors (those named X1-X5)?
 
 ```{r kj-7.2b}
 #code
@@ -145,7 +145,7 @@ simulated <- as.data.frame(simulated)
 colnames(simulated)[ncol(simulated)] <- "y"
 ```
 
-### (a). Fit a random forest model to all of the predictors, then estimate the variable importance scores. Did the random forest model signiﬁcantly use the uninformative predictors (V6 – V10)?
+### (a). Fit a random forest model to all of the predictors, then estimate the variable importance scores. Did the random forest model significantly use the uninformative predictors (V6-V10)?
 
 ```{r kj-8.1a}
 model1 <- randomForest(y ~ ., data = simulated, 
@@ -165,26 +165,26 @@ cor(simulated$duplicate1, simulated$V1)
 #code
 ```
 
-### (c). Use the `cforest` function in the party package to ﬁt a random forest model using conditional inference trees. The party package function `varimp` can calculate predictor importance. The `conditional` argument of that function toggles between the traditional importance measure and the modiﬁed version described in Strobl et al. (2007). Do these importances show the same pattern as the traditional random forest model?
+### (c). Use the `cforest` function in the party package to fit a random forest model using conditional inference trees. The party package function `varimp` can calculate predictor importance. The `conditional` argument of that function toggles between the traditional importance measure and the modified version described in Strobl et al. (2007). Do these importances show the same pattern as the traditional random forest model?
 
 ```{r kj-8.1c}
 #code
 ```
 
-### (d). Repeat this process with diﬀerent tree models, such as boosted trees and Cubist. Does the same pattern occur?
+### (d). Repeat this process with different tree models, such as boosted trees and Cubist. Does the same pattern occur?
 ```{r kj-8.1d}
 #code
 ```
 
-## 8.2: Use a simulation to show tree bias with diﬀerent granularities.
+## 8.2: Use a simulation to show tree bias with different granularities.
 
 ```{r kj-8.2}
 #code
 ```
 
-## 8.3:  In stochastic gradient boosting the bagging fraction and learning rate will govern the construction of the trees as they are guided by the gradient. Although the optimal values of these parameters should be obtained through the tuning process, it is helpful to understand how the magnitudes of these parameters aﬀect magnitudes of variable importance. Figure 8.24 provides the variable importance plots for boosting using two extreme values for the bagging fraction (0.1 and 0.9) and the learning rate (0.1 and 0.9) for the solubility data. The left-hand plot has both parameters set to 0.1, and the right-hand plot has both set to 0.9:
+## 8.3:  In stochastic gradient boosting the bagging fraction and learning rate will govern the construction of the trees as they are guided by the gradient. Although the optimal values of these parameters should be obtained through the tuning process, it is helpful to understand how the magnitudes of these parameters affect magnitudes of variable importance. Figure 8.24 provides the variable importance plots for boosting using two extreme values for the bagging fraction (0.1 and 0.9) and the learning rate (0.1 and 0.9) for the solubility data. The left-hand plot has both parameters set to 0.1, and the right-hand plot has both set to 0.9:
  
-### (a). Why does the model on the right focus its importance on just the ﬁrst few of predictors, whereas the model on the left spreads importance across more predictors? 
+### (a). Why does the model on the right focus its importance on just the first few of predictors, whereas the model on the left spreads importance across more predictors? 
 ```{r kj-8.3a}
 #code
 ```
@@ -194,7 +194,7 @@ cor(simulated$duplicate1, simulated$V1)
 #code
 ```
 
-### (c). How would increasing interaction depth aﬀect the slope of predictor importance for either model in Fig.8.24?
+### (c). How would increasing interaction depth affect the slope of predictor importance for either model in Fig.8.24?
 ```{r kj-8.3c}
 #code
 ```

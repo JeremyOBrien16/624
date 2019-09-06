@@ -5,7 +5,7 @@ output:
     reference_docx: word-styles-reference-01.docx
 ---
 
-This document contains all homework assignments for Group 2 from week 1-7. 
+This document contains all homework assignments for Group 2 from week 1-7. Participants of this group include Vinicio Haro, Juliann McEachern, Jeremy O'Brien, Bethany Poulin, and Sang (Andy) Yoon. 
 
 # Dependencies
 
@@ -42,7 +42,7 @@ Week 1: HA #2.1; HA #2.3
 #help("gas")
 ```
 
-Per the `help` function, the `gold` series represents "daily morning gold prices in US dollars. 1 January 1985 – 31 March 1989"; the `woolyrnq` series represents "quarterly production of woollen yarn in Australia: tonnes. Mar 1965 – Sep 1994"; and, the `gas` series represents "Australian monthly gas production: 1956–1995."
+Per the `help` function, the `gold` series represents "daily morning gold prices in US dollars. 1 January 1985-31 March 1989"; the `woolyrnq` series represents "quarterly production of woollen yarn in Australia: tonnes. Mar 1965-Sep 1994"; and, the `gas` series represents "Australian monthly gas production: 1956-1995."
 
 ### (a).  Use `autoplot()` to plot each of these in separate plots.
 
@@ -53,7 +53,7 @@ The `gold` plot follows a general incrementral trend until a large spike around 
 ```{r ha-2.1a-gold, fig.height=3}
 autoplot(gold) + 
   labs(title = "Daily Morning Gold Prices", 
-       subtitle = "Time Series: 01 Jan 1985 – 31 Mar 1989", 
+       subtitle = "Time Series: 01 Jan 1985 - 31 Mar 1989", 
        x = "Day", 
        y = "Price (USD)")
 ```
@@ -63,7 +63,7 @@ The `woolyrnq` plot follows a decremental trend. There is a large, downward spik
 ```{r ha-2.1a-woolyrnq, fig.height=3}
 autoplot(woolyrnq)  +
   labs(title = "Quarterly Australian Woollen Yarn Production", 
-       subtitle = "Time Series: Mar 1965 – Sep 1994", 
+       subtitle = "Time Series: Mar 1965 - Sep 1994", 
        x = "Year", 
        y = "Quantity (Tons)")
 ```
@@ -73,7 +73,7 @@ Lastly, the `gas` plot shows monthly changes to the Australian gas production. T
 ```{r ha-2.1a-gas,, fig.height=3}
 autoplot(gas) +
   labs(title = "Monthly Australian Gas Production", 
-       subtitle = "Time Series: 1956–1995", 
+       subtitle = "Time Series: 1956 - 1995", 
        x = "Year", 
        y = "Quantity")
 ```
@@ -123,7 +123,7 @@ The output from the `autoplot` function shows a general, incremental trend over 
 ```{r ha-2.3c-autoplot, fig.height=3}
 autoplot(myts) + 
   labs(title = "Monthly Australian Book Retail Data: A3349335T", 
-       subtitle = "Time Plot: Apr 1982 – Dec 2013",
+       subtitle = "Time Plot: Apr 1982 - Dec 2013",
        x = "Year", 
        y = "Sales")
 ```
@@ -133,7 +133,7 @@ Seaonal plots shows the observed data plotted against each season within our tim
 ```{r ha-2.3c-ggseasonplot, fig.width=7.5}
 ggseasonplot(myts,year.labels=TRUE, year.labels.left=TRUE) + 
   labs(title = "Monthly Australian Book Retail Data: A3349335T", 
-       subtitle = "Seasonal Plot: Apr 1982 – Dec 2013", 
+       subtitle = "Seasonal Plot: Apr 1982 - Dec 2013", 
        x = "Month", 
        y = "Sales")
 ```
@@ -143,17 +143,17 @@ The subseries plot provides a different way to view underlying seasonal patterns
 ```{r ha-2.3c-ggsubseriesplot, fig.height=3}
 ggsubseriesplot(myts) +
   labs(title = "Monthly Australian Book Retail Data: A3349335T", 
-       subtitle = "Subseries Plot: Apr 1982 – Dec 2013", 
+       subtitle = "Subseries Plot: Apr 1982 - Dec 2013", 
        x = "Month", 
        y = "Sales") 
 ```
 
-Lag plots is used to examine the correlation between the X and Y axis over a fixed period of time using a scatterplot. Per the text, "each graph shows $y_t$ plotted against $y_t−k$ for different values of $k$". Our lag plot below shows an overall positive relationship at each lag, which indicates a strong seaonal relationship in our data. 
+Lag plots is used to examine the correlation between the X and Y axis over a fixed period of time using a scatterplot. Per the text, "each graph shows $y_t$ plotted against $y_t-k$ for different values of $k$". Our lag plot below shows an overall positive relationship at each lag, which indicates a strong seaonal relationship in our data. 
 
 ```{r ha-2.3c-gglagplot}
 gglagplot(myts)+
   labs(title = "Monthly Australian Book Retail Data: A3349335T", 
-       subtitle = "Lag Plot: Apr 1982 – Dec 2013", 
+       subtitle = "Lag Plot: Apr 1982 - Dec 2013", 
        x = "Month", 
        y = "Sales") 
 ```
@@ -164,7 +164,7 @@ Lastly, our autocorrelation plot (also referred to as correlogram plot) measures
 ```{r ha-2.3c-ggAcf, fig.height=3}
 ggAcf(myts) +
   labs(title = "Monthly Australian Book Retail Data: A3349335T", 
-       subtitle = "Correlogram Plot: Apr 1982 – Dec 2013", 
+       subtitle = "Correlogram Plot: Apr 1982 - Dec 2013", 
        x = "Month", 
        y = "Sales") 
 ```
@@ -213,7 +213,7 @@ Week 2: HA #6.2
 # Assignment 3 
 Week 3: KJ #3.1; KJ #3.2
 
-## 3.1:  The UC Irvine Machine Learning Repository contains a data set related to glass identiﬁcation. The data consist of 214 glass samples labeled as one of seven class categories. There are nine predictors, including the refractive index and percentages of eight elements: Na, Mg, Al, Si, K, Ca, Ba, and Fe. The data can be accessed via:
+## 3.1:  The UC Irvine Machine Learning Repository contains a data set related to glass identification. The data consist of 214 glass samples labeled as one of seven class categories. There are nine predictors, including the refractive index and percentages of eight elements: Na, Mg, Al, Si, K, Ca, Ba, and Fe. The data can be accessed via:
 
 ```{r kj-3.1, comment=F, warning=F}
 data(Glass)
@@ -261,7 +261,7 @@ data(Soybean)
 # Assignment 4
 Week 4: HA #7.1; HA #7.3
 
-## 7.1:  Consider the `pigs` series — the number of pigs slaughtered in Victoria each month. 
+## 7.1:  Consider the `pigs` series -- the number of pigs slaughtered in Victoria each month. 
 ### (a). Use the `ses()` function in R to find the optimal values of $\alpha$ and $\ell_0$, and generate forecasts for the next four months.
 
 ```{r ha-7.1a}
@@ -282,7 +282,7 @@ Week 4: HA #7.1; HA #7.3
 # Assignment 5 
 Week 5: HA #7.5; HA #7.6; HA #7.10
 
-## 7.5: Data set books contains the daily sales of paperback and hardcover books at the same store. The task is to forecast the next four days’ sales for paperback and hardcover books. 
+## 7.5: Data set books contains the daily sales of paperback and hardcover books at the same store. The task is to forecast the next four days' sales for paperback and hardcover books. 
 
 ### (a). Plot the series and discuss the main features of the data.
 ```{r ha-7.5a}
@@ -301,12 +301,12 @@ Week 5: HA #7.5; HA #7.6; HA #7.10
 
 ## 7.6: Continuation of exercise 7.5.
 
-### (a). Now apply Holt’s linear method to the `paperback` and `hardback` series and compute four-day forecasts in each case.
+### (a). Now apply Holt's linear method to the `paperback` and `hardback` series and compute four-day forecasts in each case.
 ```{r ha-7.6a}
 #code
 ``` 
 
-### (b). Compare the RMSE measures of Holt’s method for the two series to those of simple exponential smoothing in the previous question. (Remember that Holt’s method is using one more parameter than SES.) Discuss the merits of the two forecasting methods for these data sets.
+### (b). Compare the RMSE measures of Holt's method for the two series to those of simple exponential smoothing in the previous question. (Remember that Holt's method is using one more parameter than SES.) Discuss the merits of the two forecasting methods for these data sets.
 ```{r ha-7.6b}
 #code
 ``` 
@@ -321,7 +321,7 @@ Week 5: HA #7.5; HA #7.6; HA #7.10
 #code
 ``` 
 
-## 7.10: For this exercise use data set `ukcars`, the quarterly UK passenger vehicle production data from 1977Q1–2005Q1. 
+## 7.10: For this exercise use data set `ukcars`, the quarterly UK passenger vehicle production data from 1977Q1-2005Q1. 
 
 ### (a). Plot the data and describe the main features of the series.
 ```{r ha-7.10a}
@@ -338,7 +338,7 @@ Week 5: HA #7.5; HA #7.6; HA #7.10
 #code
 ``` 
 
-### (d). Forecast the next two years of the series using Holt’s linear method applied to the seasonally adjusted data (as before but with damped=FALSE).
+### (d). Forecast the next two years of the series using Holt�-s linear method applied to the seasonally adjusted data (as before but with damped=FALSE).
 ```{r ha-7.10d}
 #code
 ``` 
