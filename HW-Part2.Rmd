@@ -1,0 +1,218 @@
+---
+title: "DATA 624: Group 2 Homework; Part 2"
+output:
+  word_document:
+    reference_docx: word-styles-reference-01.docx
+---
+
+This document contains all homework assignments for Group 2 from week 8-15.
+
+**Note:** *Not all HW assignments are currently available in BBlearn for the second half of the semester*. 
+
+# Dependencies
+
+The following packages were used in R for completion of our homework assignments:
+
+```{r dependencies, echo=T, warning=F, message=F, comment=F}
+#Textbook Packages
+library(fpp2)
+library(AppliedPredictiveModeling)
+library(mlbench)
+
+#Graphing
+library(ggplot2)
+library(gridExtra)
+
+#Math
+library(caret)
+library(forecast)
+library(randomForest)
+
+#Formatting
+library(knitr)
+```
+
+# Assignment 7 
+Week 8: KJ #6.3
+
+## 6.3: A chemical manufacturing process for a pharmaceutical product was discussed in Sect.1.4. In this problem, the objective is to understand the relationship between biological measurements of the raw materials (predictors), measurements of the manufacturing process (predictors), and the response of product yield. Biological predictors cannot be changed but can be used to assess the quality of the raw material before processing. On the other hand, manufacturing process predictors can be changed in the manufacturing process. Improving product yield by 1% will boost revenue by approximately one hundred thousand dollars per batch:
+
+### (a) Start R and use these commands to load the data:
+```{r kj-6.3a}
+data(chemicalManufacturing)
+```
+
+The matrix processPredictors contains the 57 predictors (12 describing the input biological material and 45 describing the process predictors) for the 176 manufacturing runs. yield contains the percent yield for each run. 
+
+### (b) A small percentage of cells in the predictor set contain missing values. Use an imputation function to ﬁll in these missing values (e.g., see Sect. 3.8). 
+```{r kj-6.3b}
+#code
+```
+
+### (c) Split the data into a training and a test set, pre-process the data, and tune a model of your choice from this chapter. What is the optimal value of the performance metric? 
+```{r kj-6.3c}
+#code
+```
+
+### (d) Predict the response for the test set. What is the value of the performance metric and how does this compare with the resampled performance metric on the training set? 
+```{r kj-6.3d}
+#code
+```
+
+### (e) Which predictors are most important in the model you have trained? Do either the biological or process predictors dominate the list? 
+```{r kj-6.3e}
+#code
+```
+
+### (f) Explore the relationships between each of the top predictors and the response. How could this information be helpful in improving yield in future runs of the manufacturing process?
+```{r kj-6.3f}
+#code
+```
+
+# Assignment 8 
+Week 9: KJ #7.2; KJ #7.5
+
+## 7.2: Friedman (1991) introduced several benchmark data sets create by simulation. One of these simulations used the following nonlinear equation to create data: $y = 10\text{sin}(\pi x_1 x_2)+20(x_3-0.5)^2+10x_4+5x_5+N(0,\sigma^2)$; where the $x$ values are random variables uniformly distributed between $[0, 1]$ (there are also 5 other non-informative variables also created in the simulation). The package `mlbench` contains a function called `mlbench.friedman1` that simulates these data:
+
+```{r kj-7.2-ex1}
+set.seed(200) 
+trainingData <- mlbench.friedman1(200, sd = 1)
+
+## We convert the 'x' data from a matrix to a data frame 
+## One reason is that this will give the columns names.
+
+trainingData$x <- data.frame(trainingData$x) 
+
+## Look at the data using 
+featurePlot(trainingData$x, trainingData$y) 
+## or other methods. 
+
+## This creates a list with a vector 'y' and a matrix 
+## of predictors 'x'. Also simulate a large test set to 
+## estimate the true error rate with good precision: 
+
+testData <- mlbench.friedman1(5000, sd = 1)
+testData$x <- data.frame(testData$x) 
+```
+
+### (a). Tune several models on these data. For example:
+
+```{r kj-7.2-ex2}
+knnModel <- train(x = trainingData$x,
+                  y = trainingData$y, 
+                  method = "knn",
+                  preProc = c("center", "scale"), 
+                  tuneLength = 10) 
+knnModel 
+
+knnPred <- predict(knnModel, newdata = testData$x) 
+
+## The function 'postResample' can be used to get the test set performance values
+postResample(pred = knnPred, obs = testData$y)
+```
+
+Model 1: 
+```{r kj-7.2a1}
+#code
+```
+
+Model 2: 
+```{r kj-7.2a2}
+#code
+```
+
+Model 3: 
+```{r kj-7.2a3}
+#code
+```
+
+### (b).  Which models appear to give the best performance? Does MARS select the informative predictors (those named X1–X5)?
+
+```{r kj-7.2b}
+#code
+```
+
+# Assignment 9
+Week 10-11: KJ #8.1; KJ #8.2; KJ #8.3; KJ #8.7
+
+## 8.1: Recreate the simulated data from Exercise 7.2:
+
+```{r kj-8.1}
+set.seed(200)
+simulated <- mlbench.friedman1(200, sd = 1) 
+simulated <- cbind(simulated$x, simulated$y)
+simulated <- as.data.frame(simulated) 
+colnames(simulated)[ncol(simulated)] <- "y"
+```
+
+### (a). Fit a random forest model to all of the predictors, then estimate the variable importance scores. Did the random forest model signiﬁcantly use the uninformative predictors (V6 – V10)?
+
+```{r kj-8.1a}
+model1 <- randomForest(y ~ ., data = simulated, 
+                       importance = TRUE, 
+                       ntree = 1000)
+rfImp1 <- varImp(model1, scale = FALSE)
+```
+
+### (b). Now add an additional predictor that is highly correlated with one of the informative predictors. Fit another random forest model to these data. Did the importance score for V1 change? What happens when you add another predictor that is also highly correlated with V1? For example:
+
+```{r kj-8.1b-ex}
+simulated$duplicate1 <- simulated$V1 + rnorm(200) * .1 
+cor(simulated$duplicate1, simulated$V1)
+```
+
+```{r kj-8.1b}
+#code
+```
+
+### (c). Use the `cforest` function in the party package to ﬁt a random forest model using conditional inference trees. The party package function `varimp` can calculate predictor importance. The `conditional` argument of that function toggles between the traditional importance measure and the modiﬁed version described in Strobl et al. (2007). Do these importances show the same pattern as the traditional random forest model?
+
+```{r kj-8.1c}
+#code
+```
+
+### (d). Repeat this process with diﬀerent tree models, such as boosted trees and Cubist. Does the same pattern occur?
+```{r kj-8.1d}
+#code
+```
+
+## 8.2: Use a simulation to show tree bias with diﬀerent granularities.
+
+```{r kj-8.2}
+#code
+```
+
+## 8.3:  In stochastic gradient boosting the bagging fraction and learning rate will govern the construction of the trees as they are guided by the gradient. Although the optimal values of these parameters should be obtained through the tuning process, it is helpful to understand how the magnitudes of these parameters aﬀect magnitudes of variable importance. Figure 8.24 provides the variable importance plots for boosting using two extreme values for the bagging fraction (0.1 and 0.9) and the learning rate (0.1 and 0.9) for the solubility data. The left-hand plot has both parameters set to 0.1, and the right-hand plot has both set to 0.9:
+ 
+### (a). Why does the model on the right focus its importance on just the ﬁrst few of predictors, whereas the model on the left spreads importance across more predictors? 
+```{r kj-8.3a}
+#code
+```
+
+### (b). Which model do you think would be more predictive of other samples? 
+```{r kj-8.3b}
+#code
+```
+
+### (c). How would increasing interaction depth aﬀect the slope of predictor importance for either model in Fig.8.24?
+```{r kj-8.3c}
+#code
+```
+
+
+## 8.7:  Refer to Exercises 6.3 and 7.5 which describe a chemical manufacturing process. Use the same data imputation, data splitting, and pre-processing steps as before and train several tree-based models:
+
+### (a). Which tree-based regression model gives the optimal resampling and test set performance? 
+```{r kj-8.7a}
+#code
+```
+
+### (b). Which predictors are most important in the optimal tree-based regression model? Do either the biological or process variables dominate the list? How do the top 10 important predictors compare to the top 10 predictors from the optimal linear and nonlinear models?
+```{r kj-8.7b}
+#code
+```
+
+### (c). Plot the optimal single tree with the distribution of yield in the terminal nodes. Does this view of the data provide additional knowledge about the biological or process predictors and their relationship with yield?
+```{r kj-8.7c}
+#code
+```

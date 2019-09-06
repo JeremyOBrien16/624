@@ -1,0 +1,638 @@
+---
+title: "DATA 624: Group 2 Homework"
+output:
+  word_document:
+    reference_docx: word-styles-reference-01.docx
+---
+
+# Dependencies
+
+The following packages were used in R for completion of our homework assignments:
+
+```{r dependencies, echo=T, warning=F, message=F, comment=F}
+#Textbook Packages
+library(fpp2)
+library(AppliedPredictiveModeling)
+library(mlbench)
+
+#Graphing
+library(ggplot2)
+library(gridExtra)
+
+#Math
+library(caret)
+library(forecast)
+library(randomForest)
+
+#Formatting
+library(knitr)
+```
+
+# Assignment 1
+
+Week 1: HA #2.1; HA #2.3
+
+## 2.1: Use the help function to explore what the series `gold`, `woolyrnq` and `gas` represent.
+
+```{r ha-2.1-help}
+#help("gold")
+#help("woolyrnq")
+#help("gas")
+```
+
+Per the `help` function, the `gold` series represents "daily morning gold prices in US dollars. 1 January 1985 – 31 March 1989"; the `woolyrnq` series represents "quarterly production of woollen yarn in Australia: tonnes. Mar 1965 – Sep 1994"; and, the `gas` series represents "Australian monthly gas production: 1956–1995."
+
+### (a).  Use `autoplot()` to plot each of these in separate plots.
+
+The time plots below were generated from the `autoplot` function. 
+
+The `gold` plot follows a general incrementral trend until a large spike around the indexed date of appromately 775. At which point, the value of gold begins to decrease over the remaining time captured in this series. 
+
+```{r ha-2.1a-gold, fig.height=3}
+autoplot(gold) + 
+  labs(title = "Daily Morning Gold Prices", 
+       subtitle = "Time Series: 01 Jan 1985 – 31 Mar 1989", 
+       x = "Day", 
+       y = "Price (USD)")
+```
+
+The `woolyrnq` plot follows a decremental trend. There is a large, downward spike at the start of 1975 worth noting.
+
+```{r ha-2.1a-woolyrnq, fig.height=3}
+autoplot(woolyrnq)  +
+  labs(title = "Quarterly Australian Woollen Yarn Production", 
+       subtitle = "Time Series: Mar 1965 – Sep 1994", 
+       x = "Year", 
+       y = "Quantity (Tons)")
+```
+
+Lastly, the `gas` plot shows monthly changes to the Australian gas production. The seasonal pattern of this series appears to decrease, while the overall trend in production increases.  
+
+```{r ha-2.1a-gas,, fig.height=3}
+autoplot(gas) +
+  labs(title = "Monthly Australian Gas Production", 
+       subtitle = "Time Series: 1956–1995", 
+       x = "Year", 
+       y = "Quantity")
+```
+
+### (b).  What is the frequency of each series? Hint: apply the `frequency()` function.
+
+The frequency of timeseries shows us the number of observations within a singular seasonal pattern.
+
+```{r ha-2.1b}
+frequency(gold)
+frequency(woolyrnq)
+frequency(gas)
+```
+
+Our output from the `frequency` function informs us that `gold` is an annual time series, `woolyrnq` is a quarterly series, and  `gas` is a monthly series. 
+
+### (c).  Use `which.max()` to spot the outlier in the gold series. Which observation was it?
+
+The `which.max()` function returns an index value of the maximum value within a series. Using this function, the maximum value for gold is shown below: 
+
+```{r ha-2.1c}
+which.max(gold)
+```
+
+This number aligns with the observed spike in gold price from the time series plot in part (a). 
+
+## 2.3: Download some monthly Australian retail data from the book website. These represent retail sales in various categories for different Australian states, and are stored in a MS-Excel file.
+
+### (a). You can read the data into R with the following script:
+
+```{r ha-2.3a}
+retaildata <- readxl::read_excel("data/retail.xlsx", skip=1)
+```
+
+*The second argument (skip=1) is required because the Excel sheet has two header rows.*
+
+### (b).  Select one of the time series as follows (but replace the column name with your own chosen column):
+
+```{r ha-2.3b}
+myts <- ts(retaildata[,"A3349335T"], frequency=12, start=c(1982,4))
+```
+
+### (c).  Explore your chosen retail time series using the following functions: `autoplot()`, `ggseasonplot()`, `ggsubseriesplot()`, `gglagplot()`, `ggAcf()`.
+
+The output from the `autoplot` function shows a general, incremental trend over the observed period; however, there appears to be small, decremental trends within individual seasonal pattern.
+
+```{r ha-2.3c-autoplot, fig.height=3}
+autoplot(myts) + 
+  labs(title = "Monthly Australian Book Retail Data: A3349335T", 
+       subtitle = "Time Plot: Apr 1982 – Dec 2013",
+       x = "Year", 
+       y = "Sales")
+```
+
+Seaonal plots shows the observed data plotted against each season within our time series. The seasons are overlapped, which allows for us to view underlying seasonal patterns and the years in which these trends occur. Our seaonal plot below shows that book sales tend to generally decrease in from Jan-Feb, Mar-Apr, May-Jun, Aug-Sep, and Oct-Nov. Sales generally appear to increase seasonally between the other observed months. 
+
+```{r ha-2.3c-ggseasonplot, fig.width=7.5}
+ggseasonplot(myts,year.labels=TRUE, year.labels.left=TRUE) + 
+  labs(title = "Monthly Australian Book Retail Data: A3349335T", 
+       subtitle = "Seasonal Plot: Apr 1982 – Dec 2013", 
+       x = "Month", 
+       y = "Sales")
+```
+
+The subseries plot provides a different way to view underlying seasonal patterns by separating each season in a year into an individual plot. The horizonal line shows the mean value of each month. The plot below reveals that, on average, the month of Feburary holds the lowest sales and the month of December contains the highest sales throughout all observed time periods. 
+
+```{r ha-2.3c-ggsubseriesplot, fig.height=3}
+ggsubseriesplot(myts) +
+  labs(title = "Monthly Australian Book Retail Data: A3349335T", 
+       subtitle = "Subseries Plot: Apr 1982 – Dec 2013", 
+       x = "Month", 
+       y = "Sales") 
+```
+
+Lag plots is used to examine the correlation between the X and Y axis over a fixed period of time using a scatterplot. Per the text, "each graph shows $y_t$ plotted against $y_t−k$ for different values of $k$". Our lag plot below shows an overall positive relationship at each lag, which indicates a strong seaonal relationship in our data. 
+
+```{r ha-2.3c-gglagplot}
+gglagplot(myts)+
+  labs(title = "Monthly Australian Book Retail Data: A3349335T", 
+       subtitle = "Lag Plot: Apr 1982 – Dec 2013", 
+       x = "Month", 
+       y = "Sales") 
+```
+
+Lastly, our autocorrelation plot (also referred to as correlogram plot) measures the linear relationship between the time series' lagged values. We used an autocorrelation function (ACF) below (`ggAcf`) to examine this relationship within our selected variable from the book retail data. From the graph, we can tell that $r1$ is our highest lag and $r25$ is our smallest lag. We can tell our data is trended because our plot depicts positive values that decrease slowly as our lags increase. 
+
+
+```{r ha-2.3c-ggAcf, fig.height=3}
+ggAcf(myts) +
+  labs(title = "Monthly Australian Book Retail Data: A3349335T", 
+       subtitle = "Correlogram Plot: Apr 1982 – Dec 2013", 
+       x = "Month", 
+       y = "Sales") 
+```
+
+# Assignment 2
+Week 2: HA #6.2
+
+## 6.2: The `plastics` data set consists of the monthly sales (in thousands) of product A for a plastics manufacturer for five years. 
+
+### (a). Plot the time series of sales of product A. Can you identify seasonal fluctuations and/or a trend-cycle?
+
+```{r ha-6.2a}
+#code
+```
+
+### (b). Use a classical multiplicative decomposition to calculate the trend-cycle and seasonal indices.
+
+```{r ha-6.2b}
+#code
+```
+
+### (c). Do the results support the graphical interpretation from part a?
+
+```{r ha-6.2c}
+#code
+```
+
+### (d). Compute and plot the seasonally adjusted data.
+
+```{r ha-6.2d}
+#code
+```
+
+### (e). Change one observation to be an outlier (e.g., add 500 to one observation), and recompute the seasonally adjusted data. What is the effect of the outlier?
+
+```{r ha-6.2e}
+#code
+```
+
+### (f). Does it make any difference if the outlier is near the end rather than in the middle of the time series?
+
+```{r ha-6.2f}
+#code
+```
+
+# Assignment 3 
+Week 3: KJ #3.1; KJ #3.2
+
+## 3.1:  The UC Irvine Machine Learning Repository contains a data set related to glass identiﬁcation. The data consist of 214 glass samples labeled as one of seven class categories. There are nine predictors, including the refractive index and percentages of eight elements: Na, Mg, Al, Si, K, Ca, Ba, and Fe. The data can be accessed via:
+
+```{r kj-3.1, comment=F, warning=F}
+data(Glass)
+str(Glass)
+```
+
+### (a). Using visualizations, explore the predictor variables to understand their distributions as well as the relationships between predictors.
+```{r kj-3.1a}
+#code
+```
+
+### (b).  Do there appear to be any outliers in the data? Are any predictors skewed? 
+```{r kj-3.1b}
+#code
+```
+
+### (c). Are there any relevant transformations of one or more predictors that might improve the classification model?
+```{r kj-3.1c}
+#code
+```
+
+
+## 3.2: The soybean data can also be found at the UC Irvine Machine Learning Repository. Data were collected to predict disease in 683 soybeans. The 35 predictors are mostly categorical and include information on the environmental conditions (e.g., temperature, precipitation) and plant conditions (e.g., left spots, mold growth). The outcome labels consist of 19 distinct classes. The data can be loaded via:
+
+```{r kj-3.2, comment=F, warning=F}
+data(Soybean)
+```
+
+### (a). Investigate the frequency distributions for the categorical predictors. Are any of the distributions degenerate in the ways discussed earlier in this chapter? 
+```{r kj-3.2a}
+#code
+```
+
+
+### (b). Roughly 18% of the data are missing. Are there particular predictors that are more likely to be missing? Is the pattern of missing data related to the classes? 
+```{r kj-3.2b}
+#code
+```
+
+### (c). Develop a strategy for handling missing data, either by eliminating predictors or imputation.
+```{r kj-3.2c}
+#code
+```
+
+# Assignment 4
+Week 4: HA #7.1; HA #7.3
+
+## 7.1:  Consider the `pigs` series — the number of pigs slaughtered in Victoria each month. 
+### (a). Use the `ses()` function in R to find the optimal values of $\alpha$ and $\ell_0$, and generate forecasts for the next four months.
+
+```{r ha-7.1a}
+#code
+```
+
+### (b). Compute a 95% prediction interval for the first forecast using $\hat{y}\pm1.96s$ where $s$ is the standard deviation of the residuals. Compare your interval with the interval produced by R.
+
+```{r ha-7.1b}
+#code
+``` 
+
+## 7.3: Modify your function from the previous exercise to return the sum of squared errors rather than the forecast of the next observation. Then use the `optim()` function to find the optimal values of $\alpha$ and  $\ell_0$. Do you get the same values as the `ses()` function?
+```{r ha-7.3}
+#code
+```
+
+# Assignment 5 
+Week 5: HA #7.5; HA #7.6; HA #7.10
+
+## 7.5: Data set books contains the daily sales of paperback and hardcover books at the same store. The task is to forecast the next four days’ sales for paperback and hardcover books. 
+
+### (a). Plot the series and discuss the main features of the data.
+```{r ha-7.5a}
+#code
+``` 
+
+### (b). Use the `ses()` function to forecast each series, and plot the forecasts.
+```{r ha-7.5b}
+#code
+``` 
+
+### (c). Compute the RMSE values for the training data in each case.
+```{r ha-7.5c}
+#code
+``` 
+
+## 7.6: Continuation of exercise 7.5.
+
+### (a). Now apply Holt’s linear method to the `paperback` and `hardback` series and compute four-day forecasts in each case.
+```{r ha-7.6a}
+#code
+``` 
+
+### (b). Compare the RMSE measures of Holt’s method for the two series to those of simple exponential smoothing in the previous question. (Remember that Holt’s method is using one more parameter than SES.) Discuss the merits of the two forecasting methods for these data sets.
+```{r ha-7.6b}
+#code
+``` 
+
+### (c). Compare the forecasts for the two series using both methods. Which do you think is best?
+```{r ha-7.6c}
+#code
+``` 
+
+### (d). Calculate a 95% prediction interval for the first forecast for each series, using the RMSE values and assuming normal errors. Compare your intervals with those produced using `ses` and `holt`.
+```{r ha-7.6d}
+#code
+``` 
+
+## 7.10: For this exercise use data set `ukcars`, the quarterly UK passenger vehicle production data from 1977Q1–2005Q1. 
+
+### (a). Plot the data and describe the main features of the series.
+```{r ha-7.10a}
+#code
+``` 
+
+### (b). Decompose the series using STL and obtain the seasonally adjusted data.
+```{r ha-7.10b}
+#code
+``` 
+
+### (c). Forecast the next two years of the series using an additive damped trend method applied to the seasonally adjusted data. (This can be done in one step using `stlf()` with arguments `etsmodel="AAN"`, `damped=TRUE`.)
+```{r ha-7.10c}
+#code
+``` 
+
+### (d). Forecast the next two years of the series using Holt’s linear method applied to the seasonally adjusted data (as before but with damped=FALSE).
+```{r ha-7.10d}
+#code
+``` 
+
+### (e). Now use ets() to choose a seasonal model for the data.
+```{r ha-7.10e}
+#code
+``` 
+
+### (f). Compare the RMSE of the ETS model with the RMSE of the models you obtained using STL decompositions. Which gives the better in-sample fits?
+```{r ha-7.10f}
+#code
+``` 
+
+### (g). Compare the forecasts from the three approaches? Which seems most reasonable?
+```{r ha-7.10g}
+#code
+``` 
+
+### (h). Check the residuals of your preferred model.
+```{r ha-7.10h}
+#code
+``` 
+
+# Assignment 6
+Week 6-7: HA #8.1; HA #8.2; HA #8.6; HA #8.8
+
+## 8.1: Figure 8.31 shows the ACFs for 36 random numbers, 360 random numbers and 1,000 random numbers. 
+### (a). Explain the differences among these figures. Do they all indicate that the data are white noise?
+
+```{r, echo=F}
+include_graphics("data/HA_figure_8.1a.jpg")
+```
+
+### (b). Why are the critical values at different distances from the mean of zero? Why are the autocorrelations different in each figure when they each refer to white noise?
+
+```{r 8.1b}
+#code
+```
+
+
+## 8.2: A classic example of a non-stationary series is the daily closing IBM stock price series (data set `ibmclose`). Use R to plot the daily closing prices for IBM stock and the ACF and PACF. Explain how each plot shows that the series is non-stationary and should be differenced.
+
+```{r 8.2}
+#code
+```
+
+
+## 8.6: Use R to simulate and plot some data from simple ARIMA models.
+
+### (a). Use the following R code to generate data from an AR(1) model with $\phi_1=0.6$ and $\sigma^2=1$. The process starts with $y_1=0$.
+```{r 8.6a}
+y <- ts(numeric(100))
+e <- rnorm(100)
+for(i in 2:100)
+  y[i] <- 0.6*y[i-1] + e[i]
+```
+
+### (b). Produce a time plot for the series. How does the plot change as you change $\phi_1$?
+```{r 8.6b}
+#code
+```
+
+### (c). Write your own code to generate data from an MA(1) model with $\theta_1=0.6$ and $sigma^2=1$.
+```{r 8.6c}
+#code
+```
+
+### (d).Produce a time plot for the series. How does the plot change as you change $\theta_1$?
+```{r 8.6d}
+#code
+```
+
+### (e). Generate data from an ARMA(1,1) model with $\phi_1=0.6$, $\theta_1=0.6$, and $\sigma^2=1$.
+```{r 8.6e}
+#code
+```
+
+### (f). Generate data from an AR(2) model with $\phi_1=-0.8$, $\phi_2=0.3$, and $\sigma^2=1$. (Note that these parameters will give a non-stationary series.)
+```{r 8.6f}
+#code
+```
+
+### (g). Graph the latter two series and compare them.
+```{r 8.6g}
+#code
+```
+
+## 8.8: Consider `austa`, the total international visitors to Australia (in millions) for the period 1980-2015. 
+
+### (a). Use `auto.arima()` to find an appropriate ARIMA model. What model was selected. Check that the residuals look like white noise. Plot forecasts for the next 10 periods.
+```{r 8.8a}
+#code
+```
+
+### (b). Plot forecasts from an ARIMA(0,1,1) model with no drift and compare these to part a. Remove the MA term and plot again.
+```{r 8.8b}
+#code
+```
+
+### (c). Plot forecasts from an ARIMA(2,1,3) model with drift. Remove the constant and see what happens.
+```{r 8.8c}
+#code
+```
+
+### (d). Plot forecasts from an ARIMA(0,0,1) model with a constant. Remove the MA term and plot again.
+```{r 8.8d}
+#code
+```
+
+### (e). Plot forecasts from an ARIMA(0,2,1) model with no constant.
+```{r 8.8e}
+#code
+```
+
+# Assignment 7 
+Week 8: KJ #6.3
+
+## 6.3: A chemical manufacturing process for a pharmaceutical product was discussed in Sect.1.4. In this problem, the objective is to understand the relationship between biological measurements of the raw materials (predictors), measurements of the manufacturing process (predictors), and the response of product yield. Biological predictors cannot be changed but can be used to assess the quality of the raw material before processing. On the other hand, manufacturing process predictors can be changed in the manufacturing process. Improving product yield by 1% will boost revenue by approximately one hundred thousand dollars per batch:
+
+### (a) Start R and use these commands to load the data:
+```{r kj-6.3a}
+data(chemicalManufacturing)
+```
+
+The matrix processPredictors contains the 57 predictors (12 describing the input biological material and 45 describing the process predictors) for the 176 manufacturing runs. yield contains the percent yield for each run. 
+
+### (b) A small percentage of cells in the predictor set contain missing values. Use an imputation function to ﬁll in these missing values (e.g., see Sect. 3.8). 
+```{r kj-6.3b}
+#code
+```
+
+### (c) Split the data into a training and a test set, pre-process the data, and tune a model of your choice from this chapter. What is the optimal value of the performance metric? 
+```{r kj-6.3c}
+#code
+```
+
+### (d) Predict the response for the test set. What is the value of the performance metric and how does this compare with the resampled performance metric on the training set? 
+```{r kj-6.3d}
+#code
+```
+
+### (e) Which predictors are most important in the model you have trained? Do either the biological or process predictors dominate the list? 
+```{r kj-6.3e}
+#code
+```
+
+### (f) Explore the relationships between each of the top predictors and the response. How could this information be helpful in improving yield in future runs of the manufacturing process?
+```{r kj-6.3f}
+#code
+```
+
+# Assignment 8 
+Week 9: KJ #7.2; KJ #7.5
+
+## 7.2: Friedman (1991) introduced several benchmark data sets create by simulation. One of these simulations used the following nonlinear equation to create data: $y = 10\text{sin}(\pi x_1 x_2)+20(x_3-0.5)^2+10x_4+5x_5+N(0,\sigma^2)$; where the $x$ values are random variables uniformly distributed between $[0, 1]$ (there are also 5 other non-informative variables also created in the simulation). The package `mlbench` contains a function called `mlbench.friedman1` that simulates these data:
+
+```{r kj-7.2-ex1}
+set.seed(200) 
+trainingData <- mlbench.friedman1(200, sd = 1)
+
+## We convert the 'x' data from a matrix to a data frame 
+## One reason is that this will give the columns names.
+
+trainingData$x <- data.frame(trainingData$x) 
+
+## Look at the data using 
+featurePlot(trainingData$x, trainingData$y) 
+## or other methods. 
+
+## This creates a list with a vector 'y' and a matrix 
+## of predictors 'x'. Also simulate a large test set to 
+## estimate the true error rate with good precision: 
+
+testData <- mlbench.friedman1(5000, sd = 1)
+testData$x <- data.frame(testData$x) 
+```
+
+### (a). Tune several models on these data. For example:
+
+```{r kj-7.2-ex2}
+knnModel <- train(x = trainingData$x,
+                  y = trainingData$y, 
+                  method = "knn",
+                  preProc = c("center", "scale"), 
+                  tuneLength = 10) 
+knnModel 
+
+knnPred <- predict(knnModel, newdata = testData$x) 
+
+## The function 'postResample' can be used to get the test set performance values
+postResample(pred = knnPred, obs = testData$y)
+```
+
+Model 1: 
+```{r kj-7.2a1}
+#code
+```
+
+Model 2: 
+```{r kj-7.2a2}
+#code
+```
+
+Model 3: 
+```{r kj-7.2a3}
+#code
+```
+
+### (b).  Which models appear to give the best performance? Does MARS select the informative predictors (those named X1–X5)?
+
+```{r kj-7.2b}
+#code
+```
+
+# Assignment 9
+Week 10-11: KJ #8.1; KJ #8.2; KJ #8.3; KJ #8.7
+
+## 8.1: Recreate the simulated data from Exercise 7.2:
+
+```{r kj-8.1}
+set.seed(200)
+simulated <- mlbench.friedman1(200, sd = 1) 
+simulated <- cbind(simulated$x, simulated$y)
+simulated <- as.data.frame(simulated) 
+colnames(simulated)[ncol(simulated)] <- "y"
+```
+
+### (a). Fit a random forest model to all of the predictors, then estimate the variable importance scores. Did the random forest model signiﬁcantly use the uninformative predictors (V6 – V10)?
+
+```{r kj-8.1a}
+model1 <- randomForest(y ~ ., data = simulated, 
+                       importance = TRUE, 
+                       ntree = 1000)
+rfImp1 <- varImp(model1, scale = FALSE)
+```
+
+### (b). Now add an additional predictor that is highly correlated with one of the informative predictors. Fit another random forest model to these data. Did the importance score for V1 change? What happens when you add another predictor that is also highly correlated with V1? For example:
+
+```{r kj-8.1b-ex}
+simulated$duplicate1 <- simulated$V1 + rnorm(200) * .1 
+cor(simulated$duplicate1, simulated$V1)
+```
+
+```{r kj-8.1b}
+#code
+```
+
+### (c). Use the `cforest` function in the party package to ﬁt a random forest model using conditional inference trees. The party package function `varimp` can calculate predictor importance. The `conditional` argument of that function toggles between the traditional importance measure and the modiﬁed version described in Strobl et al. (2007). Do these importances show the same pattern as the traditional random forest model?
+
+```{r kj-8.1c}
+#code
+```
+
+### (d). Repeat this process with diﬀerent tree models, such as boosted trees and Cubist. Does the same pattern occur?
+```{r kj-8.1d}
+#code
+```
+
+## 8.2: Use a simulation to show tree bias with diﬀerent granularities.
+
+```{r kj-8.2}
+#code
+```
+
+## 8.3:  In stochastic gradient boosting the bagging fraction and learning rate will govern the construction of the trees as they are guided by the gradient. Although the optimal values of these parameters should be obtained through the tuning process, it is helpful to understand how the magnitudes of these parameters aﬀect magnitudes of variable importance. Figure 8.24 provides the variable importance plots for boosting using two extreme values for the bagging fraction (0.1 and 0.9) and the learning rate (0.1 and 0.9) for the solubility data. The left-hand plot has both parameters set to 0.1, and the right-hand plot has both set to 0.9:
+ 
+### (a). Why does the model on the right focus its importance on just the ﬁrst few of predictors, whereas the model on the left spreads importance across more predictors? 
+```{r kj-8.3a}
+#code
+```
+
+### (b). Which model do you think would be more predictive of other samples? 
+```{r kj-8.3b}
+#code
+```
+
+### (c). How would increasing interaction depth aﬀect the slope of predictor importance for either model in Fig.8.24?
+```{r kj-8.3c}
+#code
+```
+
+
+## 8.7:  Refer to Exercises 6.3 and 7.5 which describe a chemical manufacturing process. Use the same data imputation, data splitting, and pre-processing steps as before and train several tree-based models:
+
+### (a). Which tree-based regression model gives the optimal resampling and test set performance? 
+```{r kj-8.7a}
+#code
+```
+
+### (b). Which predictors are most important in the optimal tree-based regression model? Do either the biological or process variables dominate the list? How do the top 10 important predictors compare to the top 10 predictors from the optimal linear and nonlinear models?
+```{r kj-8.7b}
+#code
+```
+
+### (c). Plot the optimal single tree with the distribution of yield in the terminal nodes. Does this view of the data provide additional knowledge about the biological or process predictors and their relationship with yield?
+```{r kj-8.7c}
+#code
+```
