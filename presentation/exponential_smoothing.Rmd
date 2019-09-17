@@ -53,7 +53,6 @@ Time series $y_1,y_2,\dots,y_T$.
 $$
 \begin{aligned}
   \hat{y}_{T+h|T} = y_T
-
 \end{aligned}
 $$
 
@@ -61,9 +60,7 @@ $$
 
 $$
 \begin{aligned}
-
    \hat{y}_{T+h|T} = \frac1T\sum_{t=1}^T y_t
-
 \end{aligned}
 $$
 
@@ -83,23 +80,13 @@ where $0 \le \alpha \le1$
 
 Weighted moving average with weights that decrease exponentially
 
-$$
-\small\begin{tabular}{lllll}
-\toprule
-& \multicolumn{4}{l}{Weights assigned to observations for:}\\
-Observation  &   $\alpha = 0.2$   &   $\alpha = 0.4$  &   $\alpha = 0.6$  & $\alpha = 0.8$ \\
-\midrule
-$y_{T}$      & 0.2         & 0.4          & 0.6         & 0.8\\
-$y_{T-1}$    & 0.16        & 0.24         & 0.24        & 0.16\\
-$y_{T-2}$    & 0.128       & 0.144        & 0.096       & 0.032\\
-$y_{T-3}$    & 0.1024      & 0.0864       & 0.0384      & 0.0064\\
-$y_{T-4}$    & $(0.2)(0.8)^4$  & $(0.4)(0.6)^4$   & $(0.6)(0.4)^4$  & $(0.8)(0.2)^4$\\
-$y_{T-5}$    & $(0.2)(0.8)^5$  & $(0.4)(0.6)^5$   & $(0.6)(0.4)^5$  & $(0.8)(0.2)^5$\\
-\bottomrule
-\end{tabular}
-$$
+* for $y_{T}$ and $\alpha = .2$, the weighting is $.2$
+* for $y_{T-1}$, the weighting is $.2 * (1 - .2) = .16$
+* for $y_{T-2}$, $.2 * (1 - .2)^2 = .128$
+* etc.
 
-## ## Simple Exponential Smoothing |  Component Form
+
+## Simple Exponential Smoothing |  Component Form
 
 **Component form: forecast equation**
 $$
@@ -126,7 +113,7 @@ Iterate for exponentially weighted moving average form
 **Weighted average form**
 $$
 \begin{align*}
-   \hat{y}{T+1}{T}=\sum_{j=0}^{T-1} \alpha(1-\alpha)^j y_{T-j}+(1-\alpha)^T \ell_{0}
+   \hat{y}_{T+1|T}=\sum_{j=0}^{T-1} \alpha(1-\alpha)^j y_{T-j}+(1-\alpha)^T \ell_{0}
 \end{align*}
 $$
 
@@ -165,7 +152,7 @@ autoplot(fc) +
 
 # Trend Methods
 
-## Trend methods | Holt's linear trend
+## Trend Methods | Holt's Linear Trend
  
 **Component form: forecast**
 $$
@@ -188,13 +175,15 @@ $$
 \end{align*}
 $$
 
+## Trend Methods | Holt's Linear Trend (cont'd)
+
 * Two smoothing parameters $\alpha$ and $\beta^*$ $(0\le\alpha,\beta^*\le1)$  
 * $\ell_t$ level: weighted average between $y_t$ and one-step ahead forecast for time $t$, $(\ell_{t-1} + b_{t-1} = \hat{y}_{t|t-1})$  
-* $b_t$ slope: weighted average of $(\ell_{t} - \ell_{t-1})$ and $ b_{t-1}$, current and previous estimate of slope  
+* $b_t$ slope: weighted average of $(\ell_{t} - \ell_{t-1})$ and $b_{t-1}$, current and previous estimate of slope  
 * Select $\alpha, \beta^*, \ell_0, b_0$ to minimise SSE
 
 
-## Trend methods | Example: Holt's Method
+## Trend Methods | Example: Holt's Method
  
 
 ```{r, fig.height=3.6, echo=TRUE}
@@ -221,15 +210,7 @@ $$
 * Short-run forecasts trended, long-run forecasts constant
 
 
-## Trend Methods | Example: Air passengers
- 
-```{r, echo=TRUE, fig.height=3.6}
-window(ausair, start=1990, end=2004) %>%
-  holt(damped=TRUE, h=5, PI=FALSE) %>%
-  autoplot()
-```
-
-# Holt-Winters’ Seasonal Method
+# Seasonal Methods
 
 ## Seasonal Methods | Holt-Winters Additive Method
  
@@ -245,7 +226,7 @@ $$
 \end{align*}
 $$
 
-* $k$ is integer part of $(h-1)/m$, ensuring estimates from final year used in forecast
+* $k$ is integer part of $(h-1)/m$, ensuring final year estimates in forecast
 * Parameters: $0\le \alpha\le 1$, $0\le \beta^*\le 1$, $0\le \gamma\le 1-\alpha$ and $m$ for period of seasonality (e.g. $m=4$ for quarterly data)
 
 
@@ -257,7 +238,7 @@ $$
 * Usual parameter restriction is $0\le\gamma^*\le1$ or $0\le\gamma\le(1-\alpha)$
 
 
-## Seasonal Methods | Holt-Winters multiplicative method
+## Seasonal Methods | Holt-Winters Multiplicative Method
  
 When seasonal variations change in proportion to level of series
 
@@ -272,11 +253,8 @@ $$
 \end{align*}
 $$
 
-  * $k$ is integer part of $(h-1)/m$
-  * For additive method, $s_t$ is in absolute terms:  
-  within each year $\sum_i s_i \approx 0$
-  * For multiplicative method, $s_t$ is in relative terms:  
-  within each year $\sum_i s_i \approx m$
+  * For additive method, $s_t$ is in absolute terms: within each year $\sum_i s_i \approx 0$
+  * For multiplicative method, $s_t$ is in relative terms: within each year $\sum_i s_i \approx m$
 
 
 ## Seasonal Methods | Example: Visitor Nights
