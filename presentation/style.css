@@ -1,0 +1,38 @@
+slides > slide {
+    font-family: 'Open Sans', Helvetica, Arial, sans-serif;
+    border-bottom: 50px solid  #4c7dda;
+  }
+  
+  slides > slide.title-slide {
+    border-top: 100px solid  #4c7dda;
+    border-bottom: 100px solid  #4c7dda;
+    box-shadow: 0 0 0;
+  }
+
+  
+slides > slide.dark {
+
+    background: #4c7dda !important;
+  
+    border-bottom: 0;
+  
+    box-shadow: 0 0 0;
+  
+  }
+
+  
+  slides > slide.title-slide hgroup h1 {
+    font-weight: bold;
+    color:#4c7dda;
+  }
+
+h2 { 
+    font-size: 1.5em; 
+    color: #799ee3;
+    font-weight: bold;
+  }
+  
+  h3 { 
+    font-size: 1em; 
+    color:#bccef1;
+  }

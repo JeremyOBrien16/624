@@ -1,0 +1,581 @@
+---
+title: "Exponential Smoothing"
+author: "Jeremy O'Brien & Juliann McEachern"
+date: "September 17, 2019"
+output:
+  ioslides_presentation:
+    theme: cosmo
+    highlight: kate
+    css: style.css
+    widescreen: true
+---
+
+```{r, echo=F, comment=F, error=F, warning=F, message=F}
+library(kableExtra)
+library(formattable)
+library(dplyr)
+library(fpp2)
+library(ggplot2)
+```
+
+
+## Agenda
+
+1.  Overview  
+2.  Simple methods  
+3.  Trend methods  
+4.  Seasonal methods
+5.  Taxonomy of Exponential Smoothing Methods
+6.  Innovations State Space Models 
+7.  Estimation and Model Selection
+8.  Forecasting with ETS models
+
+# Overview
+
+## Overview | What's exponential smoothing?
+
+* When making predictions, weight recent observations more than older observations  
+* Specifically, decrease weights geometrically / exponentially when moving backward  
+* Window function (a.k.a. apodization function or tapering function)  
+  + zero-valued outside of some chosen interval  
+  + normally symmetric around middle of interval  
+  + typically near maximum in the middle and tapering away from there  
+* Easily learned and applied (i.e. signal processing community in 1940's)
+
+# Simple Exponential Smoothing 
+
+## Simple Exponential Smoothing |  SES Methods
+
+Time series $y_1,y_2,\dots,y_T$.
+
+**Random walk forecast**
+
+$$
+\begin{aligned}
+  \hat{y}_{T+h|T} = y_T
+
+\end{aligned}
+$$
+
+**Average forecast** 
+
+$$
+\begin{aligned}
+
+   \hat{y}_{T+h|T} = \frac1T\sum_{t=1}^T y_t
+
+\end{aligned}
+$$
+
+
+
+Consider a happy median that privileges recent information...
+
+## Simple Exponential Smoothing |  SES Methods
+
+**Forecast equation**
+$$
+\begin{aligned}
+   \hat{y}_{T+1|T} = \alpha y_T + \alpha(1-\alpha) y_{T-1} + \alpha(1-\alpha)^2 y_{T-2}+ \cdots
+\end{aligned}
+$$
+where $0 \le \alpha \le1$
+
+Weighted moving average with weights that decrease exponentially
+
+$$
+\small\begin{tabular}{lllll}
+\toprule
+& \multicolumn{4}{l}{Weights assigned to observations for:}\\
+Observation  &   $\alpha = 0.2$   &   $\alpha = 0.4$  &   $\alpha = 0.6$  & $\alpha = 0.8$ \\
+\midrule
+$y_{T}$      & 0.2         & 0.4          & 0.6         & 0.8\\
+$y_{T-1}$    & 0.16        & 0.24         & 0.24        & 0.16\\
+$y_{T-2}$    & 0.128       & 0.144        & 0.096       & 0.032\\
+$y_{T-3}$    & 0.1024      & 0.0864       & 0.0384      & 0.0064\\
+$y_{T-4}$    & $(0.2)(0.8)^4$  & $(0.4)(0.6)^4$   & $(0.6)(0.4)^4$  & $(0.8)(0.2)^4$\\
+$y_{T-5}$    & $(0.2)(0.8)^5$  & $(0.4)(0.6)^5$   & $(0.6)(0.4)^5$  & $(0.8)(0.2)^5$\\
+\bottomrule
+\end{tabular}
+$$
+
+## ## Simple Exponential Smoothing |  Component Form
+
+**Component form: forecast equation**
+$$
+\begin{align*}
+   \hat{y}_{t+h|t} = \ell_{t}
+\end{align*}
+$$
+
+**Component form: smoothing equation**
+$$
+\begin{align*}
+   \ell_{t} = \alpha y_{t} + (1 - \alpha)\ell_{t-1}
+\end{align*}
+$$
+
+$\ell_t$ is level / smoothed value of series at time $t$
+
+$\hat{y}_{t+1|t} = \alpha y_t + (1-\alpha) \hat{y}_{t|t-1}$  
+Iterate for exponentially weighted moving average form
+
+
+## Simple Exponential Smoothing |  Weighted Average Form
+ 
+**Weighted average form**
+$$
+\begin{align*}
+   \hat{y}{T+1}{T}=\sum_{j=0}^{T-1} \alpha(1-\alpha)^j y_{T-j}+(1-\alpha)^T \ell_{0}
+\end{align*}
+$$
+
+
+## Simple Exponential Smoothing | Optimization
+ 
+To choose value for $\alpha$ and $\ell_0$, minimize SSE:
+$$
+\begin{aligned}
+    \text{SSE}=\sum_{t=1}^T(y_t - \hat{y}_{t|t-1})^2.
+\end{aligned}
+$$
+
+Unlike regression, no closed-form solution so use numerical optimization
+
+
+## Simple Exponential Smoothing |  Example: Oil production
+ 
+```{r ses1, eval=F, echo=TRUE, cache=TRUE}
+oildata <- window(oil, start=1996)
+fc <- ses(oildata, h=5)
+autoplot(fc) +
+  autolayer(fitted(fc), series="Fitted") +
+  ylab("Oil (millions of tonnes)") + xlab("Year")
+```
+
+## Simple Exponential Smoothing |  Example: Oil production {.flexbox .vcenter}
+
+```{r ses2, echo=F, cache=TRUE}
+oildata <- window(oil, start=1996)
+fc <- ses(oildata, h=5)
+autoplot(fc) +
+  autolayer(fitted(fc), series="Fitted") +
+  ylab("Oil (millions of tonnes)") + xlab("Year")
+```
+
+# Trend Methods
+
+## Trend methods | Holt's linear trend
+ 
+**Component form: forecast**
+$$
+\begin{align*}
+   \hat{y}_{t+h|t} &= \ell_{t+h}b_{t}
+\end{align*}
+$$
+
+**Component form: level**
+$$
+\begin{align*}
+    \ell_{t} &= \alpha y_{t} + (1 - \alpha)(\ell_{t-1} + b_{t-1})
+\end{align*}
+$$
+
+**Component form: trend**
+$$
+\begin{align*}
+   b_{t} &= \beta^*(\ell_{t} - \ell_{t-1}) + (1 -\beta^*)b_{t-1}
+\end{align*}
+$$
+
+* Two smoothing parameters $\alpha$ and $\beta^*$ $(0\le\alpha,\beta^*\le1)$  
+* $\ell_t$ level: weighted average between $y_t$ and one-step ahead forecast for time $t$, $(\ell_{t-1} + b_{t-1} = \hat{y}_{t|t-1})$  
+* $b_t$ slope: weighted average of $(\ell_{t} - \ell_{t-1})$ and $ b_{t-1}$, current and previous estimate of slope  
+* Select $\alpha, \beta^*, \ell_0, b_0$ to minimise SSE
+
+
+## Trend methods | Example: Holt's Method
+ 
+
+```{r, fig.height=3.6, echo=TRUE}
+window(ausair, start=1990, end=2004) %>%
+  holt(h=5, PI=FALSE) %>%
+  autoplot()
+```
+
+
+## Trend Methods | Damped Trend Method
+ 
+**Component form**
+$$
+\begin{align*}
+  \hat{y}_{t+h|t} &= \ell_{t} + (\phi+\phi^2 + \dots + \phi^{h})b_{t} \\
+  \ell_{t} &= \alpha y_{t} + (1 - \alpha)(\ell_{t-1} + \phi b_{t-1})\\
+  b_{t} &= \beta^*(\ell_{t} - \ell_{t-1}) + (1 -\beta^*)\phi b_{t-1}
+\end{align*}
+$$
+
+* Damping parameter: $0<\phi<1$
+* If $\phi=1$, identical to Holt's linear trend
+* As $h\rightarrow\infty$, $\hat{y}_{T+h|T}\rightarrow \ell_T+\phi b_T/(1-\phi)$
+* Short-run forecasts trended, long-run forecasts constant
+
+
+## Trend Methods | Example: Air passengers
+ 
+```{r, echo=TRUE, fig.height=3.6}
+window(ausair, start=1990, end=2004) %>%
+  holt(damped=TRUE, h=5, PI=FALSE) %>%
+  autoplot()
+```
+
+# Holt-Winters’ Seasonal Method
+
+## Seasonal Methods | Holt-Winters Additive Method
+ 
+Holt's method extended to capture seasonality
+
+**Component form**
+$$
+\begin{align*}
+   \hat{y}_{t+h|t} &= \ell_{t} + hb _{t} + s_{t+h-m(k+1)} \\
+   \ell_{t} &= \alpha(y_{t} - s_{t-m}) + (1 - \alpha)(\ell_{t-1} + b_{t-1})\\
+   b_{t} &= \beta^*(\ell_{t} - \ell_{t-1}) + (1 - \beta^*)b_{t-1}\\
+   s_{t} &= \gamma (y_{t}-\ell_{t-1}-b_{t-1}) + (1-\gamma)s_{t-m},
+\end{align*}
+$$
+
+* $k$ is integer part of $(h-1)/m$, ensuring estimates from final year used in forecast
+* Parameters: $0\le \alpha\le 1$, $0\le \beta^*\le 1$, $0\le \gamma\le 1-\alpha$ and $m$ for period of seasonality (e.g. $m=4$ for quarterly data)
+
+
+## Seasonal Methods | Holt-Winters Additive Method
+ 
+* Seasonal component usually expressed as $s_{t} = \gamma^* (y_{t}-\ell_{t}) + (1-\gamma^*)s_{t-m}$
+* Substitute for $\ell_t$: $s_{t} = \gamma^* (1-\alpha) (y_{t}-\ell_{t-1}-b_{t-1}) + [1-\gamma^*(1-\alpha)]s_{t-m}$
+* Set $\gamma=\gamma^*(1-\alpha)$
+* Usual parameter restriction is $0\le\gamma^*\le1$ or $0\le\gamma\le(1-\alpha)$
+
+
+## Seasonal Methods | Holt-Winters multiplicative method
+ 
+When seasonal variations change in proportion to level of series
+
+**Component form**
+
+$$
+\begin{align*}
+   \hat{y}_{t+h|t} &= (\ell_{t} + hb_{t})s_{t+h-m(k+1)}\\
+   \ell_{t} &= \alpha \frac{y_{t}}{s_{t-m}} + (1 - \alpha)(\ell_{t-1} + b_{t-1})\\
+   b_{t} &= \beta^*(\ell_{t}-\ell_{t-1}) + (1 - \beta^*)b_{t-1}\\
+   s_{t} &= \gamma \frac{y_{t}}{(\ell_{t-1} + b_{t-1})} + (1 - \gamma)s_{t-m}
+\end{align*}
+$$
+
+  * $k$ is integer part of $(h-1)/m$
+  * For additive method, $s_t$ is in absolute terms:  
+  within each year $\sum_i s_i \approx 0$
+  * For multiplicative method, $s_t$ is in relative terms:  
+  within each year $\sum_i s_i \approx m$
+
+
+## Seasonal Methods | Example: Visitor Nights
+ 
+```{r 7-HW, echo=TRUE, eval=F}
+aust <- window(austourists,start=2005)
+fit1 <- hw(aust,seasonal="additive")
+fit2 <- hw(aust,seasonal="multiplicative")
+```
+
+```{r, eval=F}
+tmp <- cbind(Data=aust,
+  "HW additive forecasts" = fit1[["mean"]],
+  "HW multiplicative forecasts" = fit2[["mean"]])
+
+autoplot(tmp) + xlab("Year") +
+  ylab("International visitor night in Australia (millions)") +
+  scale_color_manual(name="",
+    values=c('#000000','#1b9e77','#d95f02'),
+    breaks=c("Data","HW additive forecasts","HW multiplicative forecasts"))
+```
+
+## Seasonal Methods | Example: Visitor Nights {.flexbox .vcenter}
+ 
+```{r, echo=TRUE, echo=F}
+aust <- window(austourists,start=2005)
+fit1 <- hw(aust,seasonal="additive")
+fit2 <- hw(aust,seasonal="multiplicative")
+```
+
+```{r, fig.height=3.2, echo=F}
+tmp <- cbind(Data=aust,
+  "HW additive forecasts" = fit1[["mean"]],
+  "HW multiplicative forecasts" = fit2[["mean"]])
+
+autoplot(tmp) + xlab("Year") +
+  ylab("International visitor night in Australia (millions)") +
+  scale_color_manual(name="",
+    values=c('#000000','#1b9e77','#d95f02'),
+    breaks=c("Data","HW additive forecasts","HW multiplicative forecasts"))
+```
+
+
+## Seasonal Methods | Example: Vistor nights estimated components
+ 
+```{r fig-7-LevelTrendSeas1, eval=F}
+addstates <- fit1$model$states[,1:3]
+multstates <- fit2$model$states[,1:3]
+colnames(addstates) <- colnames(multstates) <-
+  c("level","slope","season")
+p1 <- autoplot(addstates, facets=TRUE) + xlab("Year") +
+  ylab("") + ggtitle("Additive states")
+p2 <- autoplot(multstates, facets=TRUE) + xlab("Year") +
+  ylab("") + ggtitle("Multiplicative states")
+gridExtra::grid.arrange(p1,p2,ncol=2)
+```
+
+## Seasonal Methods | Example: Vistor nights estimated components {.flexbox .vcenter}
+ 
+```{r fig-7-LevelTrendSeas2, echo=F}
+addstates <- fit1$model$states[,1:3]
+multstates <- fit2$model$states[,1:3]
+colnames(addstates) <- colnames(multstates) <-
+  c("level","slope","season")
+p1 <- autoplot(addstates, facets=TRUE) + xlab("Year") +
+  ylab("") + ggtitle("Additive states")
+p2 <- autoplot(multstates, facets=TRUE) + xlab("Year") +
+  ylab("") + ggtitle("Multiplicative states")
+gridExtra::grid.arrange(p1,p2,ncol=2)
+```
+
+
+## Seasonal Methods | Holt-Winters Damped Method
+ 
+$$
+\begin{align*}
+   \hat{y}_{t+h|t} &= [\ell_{t} + (\phi+\phi^2 + \dots + \phi^{h})b_{t}]s_{t+h-m(k+1)} \\
+   \ell_{t} &= \alpha(y_{t} / s_{t-m}) + (1 - \alpha)(\ell_{t-1} + \phi b_{t-1})\\
+   b_{t} &= \beta^*(\ell_{t} - \ell_{t-1}) + (1 - \beta^*)\phi b_{t-1}       \\
+   s_{t} &= \gamma \frac{y_{t}}{(\ell_{t-1} + \phi b_{t-1})} + (1 - \gamma)s_{t-m}
+\end{align*}
+$$
+
+Often single most accurate forecasting method for seasonal data
+
+
+# Taxonomy of Exponential Smoothing Methods 
+
+## Taxonomy | Exponential Smoothing Methods
+
+<table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+ <thead>
+<tr>
+<th style="border-bottom:hidden" colspan="1"></th>
+<th style="border-bottom:hidden; padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="3"><div style="padding-bottom: 5px;">SEASONAL COMPONENT</div></th>
+</tr>
+  <tr>
+   <th style="text-align:left; text-align: center" colspan="1"> 
+   <div style="padding-bottom: 5px;"><strong>TREND COMPONENT</strong></div></th>
+   <th style="text-align:center;width: 3cm;"> None <br> <font color=#ffd690>(*N*)</font> </th>
+   <th style="text-align:center;width: 3cm;"> Additive <br> <font color=#ec990b>(*A*)</font> </th>
+   <th style="text-align:center; width: 3cm;"> Multiplicative <br> <font color=#c08726>(*M*)</font></th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <th style="text-align:center;width: 5cm; "> None <br> 
+   <font color=#76b7d7>(*N*)</font> </div></th>
+   <td style="text-align:center;"> 
+   (<font color=#76b7d7>N</font>,
+   <font color=#ffd690>N</font>) 
+   </td>
+   <td style="text-align:center;"> 
+   (<font color=#76b7d7>N</font>,
+   <font color=#ec990b>A</font>) 
+   </td>
+   <td style="text-align:center;"> 
+   (<font color=#76b7d7>N</font>, 
+   <font color=#c08726>M</font>)
+   </td>
+  </tr>
+  <tr>
+   <th style="text-align:center;width: 5cm; "> Additive <br> 
+   <font color=#137db3>(*A*)</font> </td>
+   <td style="text-align:center;"> 
+   (<font color=#137db3>A</font>,
+   <font color=#ffd690>N</font>)
+   </td>
+   <td style="text-align:center;"> 
+   (<font color=#137db3>A</font>,
+   <font color=#ec990b>A</font>)
+   </td>
+   <td style="text-align:center;"> 
+   (<font color=#137db3>A</font>, 
+   <font color=#c08726>M</font>)
+   </td>
+  </tr>
+  <tr>
+   <th style="text-align:center;width: 5cm; "> Additive Damped <br> 
+   <font color=#1f5976>(*A$_d$*)</font></td>
+   <td style="text-align:center;"> 
+   (<font color=#1f5976>A$_d$</font>, 
+   <font color=#ffd690>N</font>)
+   </td>
+   <td style="text-align:center;"> 
+   (<font color=#1f5976>A$_d$</font>, 
+   <font color=#ec990b>A</font>) 
+   </td>
+   <td style="text-align:center;"> 
+   (<font color=#1f5976>A$_d$</font>, 
+   <font color=#c08726>M</font>)
+   </td>
+  </tr>
+</tbody>
+</table>
+
+## Taxonomy | Variations Explained 
+
+Short hand representation of methods: 
+
+*  (<font color=#76b7d7>N</font>, <font color=#ffd690>N</font>):  Simple exponential smoothing
+*  (<font color=#137db3>A</font>, <font color=#ffd690>N</font>):  Holt’s linear method 
+*  (<font color=#1f5976>A$_d$</font>, <font color=#ffd690>N</font>):  Additive damped trend method 
+*  (<font color=#137db3>A</font>, <font color=#ec990b>A</font>):  Additive Holt-Winters’ method 
+*  (<font color=#137db3>A</font>, <font color=#c08726>M</font>):  Multiplicative Holt-Winters’ method 
+*  (<font color=#1f5976>A$_d$</font>, <font color=#c08726>M</font>):  Holt-Winters’ damped method 
+
+## Taxonomy | R Functions {.smaller}
+ 
+Simple Exponential Smoothing: No Trend  
+>  `ses(y)`
+
+Holt's Method: Linear Trend   
+>  `holt(y)`
+
+Damped trend Method.  
+>  `holt(y, damped=TRUE)`
+
+Holt-Winters methods  
+>  `hw(y, damped=TRUE, seasonal="additive")`  
+>  `hw(y, damped=FALSE, seasonal="additive")`  
+>  `hw(y, damped=TRUE, seasonal="multiplicative")`  
+>  `hw(y, damped=FALSE, seasonal="multiplicative")`
+
+# Innovations State Space Models
+
+## Innovations State Space Models | Exponential Smoothing Models vs. Methods
+
+1.  **Methods**: 
+    Apply algorithms to obtain point forecasts
+2.  **Models**: 
+    Apply stochastic generating process to forecast an entire  distribution.
+    +  Generate point forcasts *and* forecast intervals
+    +  Beneficial for model selection 
+
+## Innovations State Space Models | Overview
+
+1.  Each model contains two equations:   
+    +  **Observation** equation for observed data components.  
+    +  **State** equation for unobserved changes in level, trend, and seasonal components.  
+    
+2.  Each method contains two models distinguished by either additive or multiplicative errors.  
+
+3.  **E**rror, **T**rend, **S**easonal (**ETS**) labeling is used to differentiate models, methods, and type.
+
+## Innovations State Space Models | ETS Structure
+
+18 variations of ETS models exist and are classified as follows:  
+
+1.  Error: $\{$<font color=#9dd182>$A$</font> | 
+              <font color=#659b4a>$M$</font>$\}$
+    +  Additive Errors
+    +  Multipicative Errors
+
+2.  Trend: $\{$<font color=#76b7d7>$N$</font> | 
+            <font color=#137db3>$A$</font> | 
+            <font color=#1f5976>$A_d$</font>$\}$ 
+
+3.  Seasonal: $\{$<font color=#ffd690>$N$</font> | 
+              <font color=#ec990b>$A$</font> | 
+              <font color=#c08726>$M$</font>$\}$
+              
+## Innovations State Space Models | ETS Model Classification Examples
+*  $($<font color=#9dd182>$A$</font>, 
+<font color=#76b7d7>$N$</font>, 
+<font color=#ffd690>$N$</font>$)$:  Simple exponential smoothing; additive errors
+*  $($<font color=#659b4a>$M$</font>,
+    <font color=#76b7d7>$N$</font>, 
+    <font color=#ffd690>$N$</font>$)$: Simple exponential smoothing; multiplicative errors  
+*  $($<font color=#9dd182>$A$</font>,
+    <font color=#137db3>$A$</font>, 
+    <font color=#ffd690>$N$</font>$)$:  Holt's linear method; additive errors 
+*  $($<font color=#659b4a>$M$</font>,
+      <font color=#137db3>$A$</font>, 
+      <font color=#ffd690>$N$</font>$)$: Holt’s linear method; multiplicative errors 
+*  $($<font color=#659b4a>$M$</font>,
+      <font color=#137db3>$A$</font>, 
+      <font color=#c08726>$M$</font>$)$:  Multiplicative Holt-Winters’ method; multiplicative errors
+
+# Estimation and Model Selection
+
+##  Estimation and Model Selection | Estimating ETS models
+
+*  Smoothing parameters $\alpha$, $\beta$, $\gamma$ and $\phi$, and the initial states $\ell_0$, $b_0$, $s_0,s_{-1},\dots,s_{-m+1}$ are estimated by maximising the "likelihood" = the probability of the data arising from the specified model.
+*  For models with additive errors equivalent to minimising SSE.
+*  For models with multiplicative errors, **not** equivalent to minimising SSE.
+*  We will estimate models with the `ets()` function in the forecast package.
+
+##  Estimation and Model Selection | Selecting ETS models
+
+**Akaike’s Information Criterion (AIC):**
+
+$$
+\text{AIC} = -2\log(\text{L}) + 2k
+$$
+
+**Corrected Akaike’s Information Criterion (AIC$_c$):**
+
+$$
+\text{AIC}_{\text{c}} = \text{AIC} + \frac{2(k+1)(k+2)}{T-k}
+$$
+
+**Schwarz’s Bayesian Information Criterion (BIC):**
+
+$$
+\text{BIC} = \text{AIC} + k(\log(T)-2)
+$$
+
+
+
+##  Estimation and Model Selection | Automatic Forecasting: Tourist Example
+
+Automatic forecasting using the `ets()` function: 
+*  Automatically selects models when arguments are set to default.
+*  Produces forecasts using best method.
+*  Obtain forecast intervals using underlying state spacemodel.
+
+Tourist example from text: 
+
+```{r, eval=F}
+aust <- window(austourists, start=2005) 
+fit <- ets(aust) 
+summary(fit)
+```
+
+##  Estimation and Model Selection | Automatic Forecasting: Tourist Example {.smaller}
+
+```{r, echo=F, tidy=F, out.width="30%", out.height="20%"}
+aust <- window(austourists, start=2005) 
+fit <- ets(aust) 
+summary(fit)
+```
+
+# Forecasting with ETS models
+
+##  Forecasting with ETS models
+
+## Sources
+
+1. https://github.com/robjhyndman/ETC3550Slides/raw/master/7-exponentialsmoothing.pdf
+2. https://en.wikipedia.org/wiki/Exponential_smoothing
+3. https://machinelearningmastery.com/exponential-smoothing-for-time-series-forecasting-in-python/
